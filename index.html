@@ -73,6 +73,7 @@
           const [interimTranscript, setInterimTranscript] = useState('');
           const [callDuration, setCallDuration] = useState(0);
           const [error, setError] = useState('');
+          const [includeTimestamp, setIncludeTimestamp] = useState(true);
           
           const recognitionRef = useRef(null);
           const timerRef = useRef(null);
@@ -311,17 +312,24 @@
             
             const content = transcript.map(entry => {
               if (entry.speaker === 'system') {
-                return `[${entry.timestamp}] SYSTEM: ${entry.text}`;
+                return includeTimestamp 
+                  ? `[${entry.timestamp}] SYSTEM: ${entry.text}`
+                  : `SYSTEM: ${entry.text}`;
               }
               const speaker = entry.speaker === 'customer' ? 'CUSTOMER' : 'AGENT';
-              return `[${entry.timestamp}] ${speaker}: ${entry.text}`;
+              return includeTimestamp
+                ? `[${entry.timestamp}] ${speaker}: ${entry.text}`
+                : `${speaker}: ${entry.text}`;
             }).join('\n\n');
 
             const blob = new Blob([header + content], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `call-transcript-${new Date().getTime()}.txt`;
+            const filename = includeTimestamp 
+              ? `call-transcript-${new Date().getTime()}.txt`
+              : `call-transcript-no-time-${new Date().getTime()}.txt`;
+            a.download = filename;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -513,6 +521,18 @@
                               Agent
                             </button>
                           </div>
+                        </div>
+
+                        <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-3 mb-3">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={includeTimestamp}
+                              onChange={(e) => setIncludeTimestamp(e.target.checked)}
+                              className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-cyan-600 focus:ring-2 focus:ring-cyan-500 cursor-pointer"
+                            />
+                            <span className="text-sm text-slate-300">Include timestamps in export</span>
+                          </label>
                         </div>
 
                         <div className="grid grid-cols-2 gap-2">
